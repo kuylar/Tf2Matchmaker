@@ -65,6 +65,9 @@ public static class ServerQueryManager
 				foreach ((string? key, string? value) in rules.Rules) 
 					Log.Information("{0}: {1}", key, value);
 				break;
+			case 'l': // ??? randomly got this
+				Log.Information("[{0}] Sent message: {1}", server, reader.ReadNullTerminatedString().Trim());
+				break;
 			default:
 				Log.Warning("Unknown header: 0x{0:X2}/{1}", (byte)header, header);
 				Log.Warning("Packet data: {0}", Convert.ToBase64String(buffer));
