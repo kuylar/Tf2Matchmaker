@@ -1,12 +1,29 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Net;
 
-namespace Tf2Matchmaker.Servers;
+namespace Tf2Matchmaker.Common.Servers;
 
 // ReSharper disable once InconsistentNaming
 public class TFServer
 {
-	public string Id => ServerHost.ToString();
-	public IPEndPoint ServerHost { get; set; }
+	[Key]
+	public string Id { get; set; }
+	
+	public string Ip { get; set; }
+	public int ServerPort { get; set; }
+	
+	[NotMapped]
+	public IPEndPoint ServerHost
+	{
+		get => new(IPAddress.Parse(Ip), ServerPort);
+		set
+		{
+			Ip = value.Address.ToString();
+			ServerPort = value.Port;
+		}
+	}
+
 	public byte Protocol { get; set; }
 	public string Name { get; set; }
 	public string Map { get; set; }
@@ -28,8 +45,14 @@ public class TFServer
 	public string[]? Keywords { get; set; }
 	public long? GameId { get; set; }
 
+	// Empty ctor required by EFCore
+#pragma warning disable CS8618
+	public TFServer() { }
+#pragma warning restore CS8618
+
 	public TFServer(IPEndPoint ip, BinaryReader reader)
 	{
+		Id = $"{ip.Address.ToString()}:{ip.Port}";
 		ServerHost = ip;
 		Protocol = reader.ReadByte();
 		Name = reader.ReadNullTerminatedString();

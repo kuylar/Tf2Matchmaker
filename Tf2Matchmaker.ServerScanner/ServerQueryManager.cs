@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using Serilog;
-using Tf2Matchmaker.Servers;
+using Tf2Matchmaker.Common.Servers;
 
 namespace Tf2Matchmaker.ServerScanner;
 

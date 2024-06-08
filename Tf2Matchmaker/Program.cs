@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
+using Tf2Matchmaker.Database;
 
 Log.Logger = new LoggerConfiguration()
 	.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -12,6 +14,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSerilog();
+builder.Services.AddDbContext<DatabaseContext>(options => options.UseNpgsql(DatabaseContext.GetConnectionString()));
 
 WebApplication app = builder.Build();
 

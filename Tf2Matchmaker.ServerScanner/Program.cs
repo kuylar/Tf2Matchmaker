@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
+using Tf2Matchmaker.Database;
 using Tf2Matchmaker.ServerScanner;
 
 Log.Logger = new LoggerConfiguration()
@@ -29,6 +31,57 @@ _ = Task.Run(async () =>
 MasterServer.Init();
 List<IPEndPoint> servers = [];
 
+DatabaseContext db = new();
+db.Database.Migrate();
+db.Dispose();
+
+ServerQueryManager.OnServerReceived += (_, server) =>
+{
+	DatabaseContext database = new();
+	try
+	{
+		int count = database.Servers.Count(x => x.Id == server.Id);
+		if (count > 0)
+			database.Servers.Update(server);
+		else
+			database.Servers.Add(server);
+
+		database.SaveChanges();
+	}
+	catch (Exception e)
+	{
+		Log.Error(e, "Failed to save changes for TFServer {0} to the server", server.Id);
+	}
+};
+
+ServerQueryManager.OnServerRulesReceived += (_, rules) =>
+{
+	DatabaseContext database = new();
+	try
+	{
+		database.Rules.Add(rules);
+		database.SaveChanges();
+	}
+	catch (Exception e)
+	{
+		Log.Error(e, "Failed to save changes for TFServerRules {0} to the server", rules.Id);
+	}
+};
+
+ServerQueryManager.OnServerPlayerListReceived += (_, playersList) =>
+{
+	DatabaseContext database = new();
+	try
+	{
+		database.PlayerLists.Add(playersList);
+		database.SaveChanges();
+	}
+	catch (Exception e)
+	{
+		Log.Error(e, "Failed to save changes for TFServerPlayerList {0} to the server", playersList.Id);
+	}
+};
+
 Timer masterServerRefreshTimer = new(async _ =>
 {
 	Log.Information("Querying master server...");
@@ -42,7 +95,7 @@ Timer refreshTimer = new(async _ =>
 {
 	Log.Information("Querying all servers...");
 	Stopwatch sp = Stopwatch.StartNew();
-	foreach (IPEndPoint server in servers) 
+	foreach (IPEndPoint server in servers)
 		await ServerQueryManager.QuerySingleServer(server);
 	Log.Information("Sent query packets to all {0} servers in {1}.", servers.Count, sp.Elapsed);
 }, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30));

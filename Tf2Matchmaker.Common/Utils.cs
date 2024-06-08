@@ -1,3 +1,5 @@
+using System.Web;
+
 namespace Tf2Matchmaker;
 
 public static class Utils
@@ -12,7 +14,7 @@ public static class Utils
 			res += c;
 		} while (c != 0x00);
 
-		return res;
+		return res.TrimEnd('\0');
 	}
 
 	public static ServerType GetServerType(this char b)
@@ -37,4 +39,15 @@ public static class Utils
 			_ => ServerEnvironment.Unknown
 		};
 	}
+
+	public static Dictionary<string, string> FromQuery(this string encoded) =>
+		encoded
+			.Split('&')
+			.Select(x => x.Split('='))
+			.Where(x => x.Length >= 2)
+			.ToDictionary(x => HttpUtility.UrlDecode(x[0]), x => HttpUtility.UrlDecode(x[1]));
+
+	public static string ToQuery(this Dictionary<string, string> dictionary) =>
+		string.Join('&',
+			dictionary.Select(x => $"{HttpUtility.UrlEncode(x.Key)}={HttpUtility.UrlEncode(x.Value)}"));
 }

@@ -10,6 +10,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Tf2Matchmaker.Common\Tf2Matchmaker.Common.csproj" />
+      <ProjectReference Include="..\Tf2Matchmaker.Database\Tf2Matchmaker.Database.csproj" />
     </ItemGroup>
 
     <ItemGroup>
