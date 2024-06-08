@@ -33,6 +33,7 @@ public class TFServerRules
 	
 	[NotMapped]
 	public Dictionary<string, string> Rules { get; set; }
+	public DateTimeOffset LastFetched { get; set; }
 
 	// Empty ctor required by EFCore
 #pragma warning disable CS8618
@@ -51,5 +52,6 @@ public class TFServerRules
 			string value = reader.ReadNullTerminatedString();
 			Rules[key] = value;
 		}
+		LastFetched = DateTimeOffset.UtcNow;
 	}
 }

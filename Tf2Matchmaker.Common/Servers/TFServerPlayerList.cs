@@ -32,6 +32,7 @@ public class TFServerPlayerList
 
 	[NotMapped]
 	public TFServerPlayer[] Players { get; set; }
+	public DateTimeOffset LastFetched { get; set; }
 
 	// Empty ctor required by EFCore
 #pragma warning disable CS8618
@@ -46,5 +47,6 @@ public class TFServerPlayerList
 		Players = new TFServerPlayer[playerCount];
 		for (int i = 0; i < playerCount; i++) 
 			Players[i] = new TFServerPlayer(reader);
+		LastFetched = DateTimeOffset.UtcNow;
 	}
 }

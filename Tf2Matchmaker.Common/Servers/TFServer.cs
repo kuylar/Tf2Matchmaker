@@ -44,6 +44,7 @@ public class TFServer
 	public string? SpectatorServerName { get; set; }
 	public string[]? Keywords { get; set; }
 	public long? GameId { get; set; }
+	public DateTimeOffset LastFetched { get; set; }
 
 	// Empty ctor required by EFCore
 #pragma warning disable CS8618
@@ -96,5 +97,6 @@ public class TFServer
 		{
 			GameId = reader.ReadInt64();
 		}
+		LastFetched = DateTimeOffset.UtcNow;
 	}
 }
