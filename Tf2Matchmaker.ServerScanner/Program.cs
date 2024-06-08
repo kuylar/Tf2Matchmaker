@@ -1,7 +1,8 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
 using Serilog;
 using Serilog.Events;
-using Tf2Matchmaker.Servers;
+using Tf2Matchmaker.ServerScanner;
 
 Log.Logger = new LoggerConfiguration()
 	.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -26,12 +27,24 @@ _ = Task.Run(async () =>
 });
 
 MasterServer.Init();
-IPEndPoint[] servers = await MasterServer.GetAllServers();
-Log.Information("Found {0} servers", servers.Length);
-// TODO: do this every 30 seconds/1 minutes/5 minuets/idk
-foreach (IPEndPoint server in servers)
+List<IPEndPoint> servers = [];
+
+Timer masterServerRefreshTimer = new(async _ =>
 {
-	ServerQueryManager.QuerySingleServer(server);
-}
+	Log.Information("Querying master server...");
+	IPEndPoint[] newServers = await MasterServer.GetAllServers();
+	servers.Clear();
+	servers.AddRange(newServers);
+	Log.Information("Found {0} servers", servers.Count);
+}, null, TimeSpan.Zero, TimeSpan.FromMinutes(30));
+
+Timer refreshTimer = new(async _ =>
+{
+	Log.Information("Querying all servers...");
+	Stopwatch sp = Stopwatch.StartNew();
+	foreach (IPEndPoint server in servers) 
+		await ServerQueryManager.QuerySingleServer(server);
+	Log.Information("Sent query packets to all {0} servers in {1}.", servers.Count, sp.Elapsed);
+}, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30));
 
 await Task.Delay(-1);

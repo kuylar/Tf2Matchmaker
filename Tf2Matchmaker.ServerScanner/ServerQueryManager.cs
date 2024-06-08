@@ -1,9 +1,9 @@
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using Serilog;
+using Tf2Matchmaker.Servers;
 
-namespace Tf2Matchmaker.Servers;
+namespace Tf2Matchmaker.ServerScanner;
 
 public static class ServerQueryManager
 {

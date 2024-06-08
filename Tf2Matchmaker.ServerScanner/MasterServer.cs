@@ -3,7 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using Serilog;
 
-namespace Tf2Matchmaker.Servers;
+namespace Tf2Matchmaker.ServerScanner;
 
 public static class MasterServer
 {
@@ -61,12 +61,10 @@ public static class MasterServer
 		masterServerClient.Connect(masterServerEndpoint);
 		string lastServer = "0.0.0.0:0";
 		bool complete = false;
-		Log.Information("Querying master server...");
 		while (!complete)
 		{
 			await masterServerClient.SendAsync(GetQueryPacket(lastServer));
 			byte[] packet = masterServerClient.Receive(ref masterServerEndpoint);
-			Log.Information("Packet received!");
 			IEnumerable<byte[]> ips = packet.Chunk(6);
 			foreach (byte[] ipBytes in ips)
 			{
@@ -83,7 +81,7 @@ public static class MasterServer
 				    ipBytes[2] == 0xFF &&
 				    ipBytes[3] == 0xFF)
 				{
-					Log.Information("Got message header");
+					Log.Debug("Got message header");
 					continue;
 				}
 
@@ -94,13 +92,13 @@ public static class MasterServer
 				    ipBytes[4] == 0x00 &&
 				    ipBytes[5] == 0x00)
 				{
-					Log.Information("Got end of list");
+					Log.Debug("Got end of list");
 					complete = true;
 					continue;
 				}
 				IPEndPoint serverIp = new(new IPAddress(ipBytes[..4]), BitConverter.ToUInt16(ipBytes[4..].Reverse().ToArray()));
 				res.Add(serverIp);
-				//Log.Information("Found server: {0}:{1}", serverIp.Address.ToString(), serverIp.Port);
+				Log.Debug("Found server: {0}:{1}", serverIp.Address.ToString(), serverIp.Port);
 				lastServer = serverIp.ToString();
 			}
 		}
