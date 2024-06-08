@@ -1,7 +1,5 @@
-using System.Net;
 using Serilog;
 using Serilog.Events;
-using Tf2Matchmaker.Servers;
 
 Log.Logger = new LoggerConfiguration()
 	.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -9,33 +7,6 @@ Log.Logger = new LoggerConfiguration()
 	.WriteTo.Console()
 	.CreateBootstrapLogger();
 
-_ = Task.Run(async () =>
-{
-	while (true)
-	{
-		try
-		{
-			await ServerQueryManager.Listen();
-		}
-		catch (Exception e)
-		{
-			Log.Error(e, "ServerQueryManager.Listen stopped, restarting...");
-		}
-	}
-	// ReSharper disable once FunctionNeverReturns
-});
-
-
-MasterServer.Init();
-IPEndPoint[] servers = await MasterServer.GetAllServers();
-Log.Information("Found {0} servers", servers.Length);
-foreach (IPEndPoint server in servers)
-{
-	ServerQueryManager.QuerySingleServer(server);
-}
-
-await Task.Delay(-1);
-/*
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -61,4 +32,3 @@ app.MapControllerRoute(
 	pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
-*/

@@ -12,4 +12,12 @@
       <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Servers\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Tf2Matchmaker.Common\Tf2Matchmaker.Common.csproj" />
+    </ItemGroup>
+
 </Project>
