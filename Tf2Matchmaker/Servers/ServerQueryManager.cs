@@ -43,27 +43,29 @@ public static class ServerQueryManager
 				break;
 			case 'I': // A2S_INFO
 				TFServer tfServer = new(server, reader);
-				if (tfServer.Players > 0)
-					Log.Information("{8,-22} [VAC:{0}] {1,-50}   {2,-20}   {3,3}/{4,3} ({5,2} bots) | {6,-20} | {7}",
-						tfServer.Vac, string.Join("", tfServer.Name.Take(48)), string.Join("", tfServer.Game.Take(18)),
-						tfServer.Players, tfServer.MaxPlayers, tfServer.Bots, string.Join("", tfServer.Map.Take(19)),
-						string.Join("", string.Join(", ", tfServer.Keywords ?? []).Take(50)), server);
+				OnServerReceived?.Invoke(null, tfServer);
+				//Log.Information("{8,-22} [VAC:{0}] {1,-50}   {2,-20}   {3,3}/{4,3} ({5,2} bots) | {6,-20} | {7}",
+				//	tfServer.Vac, string.Join("", tfServer.Name.Take(48)), string.Join("", tfServer.Game.Take(18)),
+				//	tfServer.Players, tfServer.MaxPlayers, tfServer.Bots, string.Join("", tfServer.Map.Take(19)),
+				//	string.Join("", string.Join(", ", tfServer.Keywords ?? []).Take(50)), server);
 				break;
 			case 'D': // A2S_PLAYER
 				TFServerPlayerList list = new(server, reader);
-				Log.Information("{0,-22} Got {1} players:", server, list.Players.Length);
-				for (int i = 0; i < list.Players.Length; i++)
-				{
-					TFServerPlayer player = list.Players[i];
-					Log.Information("#[{0}] {1,-16} {2,-3} {3}", i, string.Join("", player.Name.Take(15)), player.Score,
-						player.OnlineDuration);
-				}
+				OnServerPlayerListReceived?.Invoke(null, list);
+				//Log.Information("{0,-22} Got {1} players:", server, list.Players.Length);
+				//for (int i = 0; i < list.Players.Length; i++)
+				//{
+				//	TFServerPlayer player = list.Players[i];
+				//	Log.Information("#[{0}] {1,-16} {2,-3} {3}", i, string.Join("", player.Name.Take(15)), player.Score,
+				//		player.OnlineDuration);
+				//}
 				break;
 			case 'E': // A2S_RULES
 				TFServerRules rules = new(server, reader);
-				Log.Information("[{0}] Got {1} rules", server, rules.Rules.Count);
-				foreach ((string? key, string? value) in rules.Rules) 
-					Log.Information("{0}: {1}", key, value);
+				OnServerRulesReceived?.Invoke(null, rules);
+				//Log.Information("[{0}] Got {1} rules", server, rules.Rules.Count);
+				//foreach ((string? key, string? value) in rules.Rules) 
+				//	Log.Information("{0}: {1}", key, value);
 				break;
 			case 'l': // ??? randomly got this
 				Log.Information("[{0}] Sent message: {1}", server, reader.ReadNullTerminatedString().Trim());
@@ -127,4 +129,8 @@ public static class ServerQueryManager
 
 	private static byte[] AppendChallenge(byte[] packet, byte[]? challenge) =>
 		packet.Concat(challenge ?? [0xFF, 0xFF, 0xFF, 0xFF]).ToArray();
+
+	public static event EventHandler<TFServer>? OnServerReceived;
+	public static event EventHandler<TFServerPlayerList>? OnServerPlayerListReceived;
+	public static event EventHandler<TFServerRules>? OnServerRulesReceived;
 }
