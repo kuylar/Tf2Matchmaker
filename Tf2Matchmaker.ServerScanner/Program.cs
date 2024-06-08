@@ -40,12 +40,7 @@ ServerQueryManager.OnServerReceived += (_, server) =>
 	DatabaseContext database = new();
 	try
 	{
-		int count = database.Servers.Count(x => x.Id == server.Id);
-		if (count > 0)
-			database.Servers.Update(server);
-		else
-			database.Servers.Add(server);
-
+		database.Servers.Upsert(server);
 		database.SaveChanges();
 	}
 	catch (Exception e)
