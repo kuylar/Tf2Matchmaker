@@ -36,39 +36,27 @@ public static class ServerQueryManager
 		switch (header)
 		{
 			case 'A': // S2C_CHALLENGE
-				await QuerySingleServer(server, reader.ReadBytes(4));
+				byte[] challenge = reader.ReadBytes(4);
+				await QuerySingleServer(server, challenge);
+				await QueryPlayers(server, challenge);
 				break;
 			case 'I': // A2S_INFO
-				//Log.Information("Got A2S_INFO");
-				TFServer tfServer = new TFServer(server, reader);
-/*
-				Log.Information(
-					"Server Info:\nprotocol: {0}\nname: {1}\nmap: {2}\nfolder: {3}\ngame: {4}\nappId: {5}\nplayers: {6}\nmaxPlayers: {7}\nbots: {8}\ntype: {9}\nenvironment: {10}\nvisibility: {11}\nvac: {12}\nversion: {13}\nport: {15}\nserverSteamId: {16}\nspectatorPort: {17}\nspectatorServerName: {18}\nkeywords: {19}\ngameId: {20}",
-					tfServer.Protocol,
-					tfServer.Name,
-					tfServer.Map,
-					tfServer.Folder,
-					tfServer.Game,
-					tfServer.AppId,
-					tfServer.Players,
-					tfServer.MaxPlayers,
-					tfServer.Bots,
-					tfServer.Type,
-					tfServer.Environment,
-					tfServer.Visibility,
-					tfServer.Vac,
-					tfServer.Version,
-					tfServer.Port ?? -1,
-					tfServer.ServerSteamId ?? -1,
-					tfServer.SpectatorPort ?? -1,
-					tfServer.SpectatorServerName ?? "<null>",
-					string.Join(", ", tfServer.Keywords ?? []),
-					tfServer.GameId ?? -1);*/
+				TFServer tfServer = new(server, reader);
 				if (tfServer.Players > 0)
-					Log.Information("[VAC:{0}] {1,-50}   {2,-20}   {3,3}/{4,3} ({5,2} bots) | {6,-20} | {7}",
+					Log.Information("{8,-22} [VAC:{0}] {1,-50}   {2,-20}   {3,3}/{4,3} ({5,2} bots) | {6,-20} | {7}",
 						tfServer.Vac, string.Join("", tfServer.Name.Take(48)), string.Join("", tfServer.Game.Take(18)),
 						tfServer.Players, tfServer.MaxPlayers, tfServer.Bots, string.Join("", tfServer.Map.Take(19)),
-						string.Join("", string.Join(", ", tfServer.Keywords ?? []).Take(50)));
+						string.Join("", string.Join(", ", tfServer.Keywords ?? []).Take(50)), server);
+				break;
+			case 'D': // A2S_PLAYER
+				TFServerPlayerList list = new(server, reader);
+				Log.Information("{0,-22} Got {1} players:", server, list.Players.Length);
+				for (int i = 0; i < list.Players.Length; i++)
+				{
+					TFServerPlayer player = list.Players[i];
+					Log.Information("#[{0}] {1,-16} {2,-3} {3}", i, string.Join("", player.Name.Take(15)), player.Score,
+						player.OnlineDuration);
+				}
 				break;
 			default:
 				Log.Warning("Unknown header: 0x{0:X2}/{1}", (byte)header, header);
@@ -88,6 +76,18 @@ public static class ServerQueryManager
 			0x67, 0x69, 0x6E, 0x65, 0x20, 0x51, 0x75, 0x65, 0x72, 0x79, 0x00,
 		];
 		await serverQueryClient.SendAsync(request, serverEndpoint);
+	}
+
+	public static async Task QueryPlayers(IPEndPoint serverEndpoint, byte[] challenge)
+	{
+		byte[] request =
+		[
+			// -1, Packet isnt split
+			0xFF, 0xFF, 0xFF, 0xFF,
+			// 'U'
+			0x55
+		];
+		await serverQueryClient.SendAsync(AppendChallenge(request, challenge), serverEndpoint);
 	}
 
 	public static async Task QuerySingleServer(IPEndPoint serverEndpoint, byte[] challenge)
