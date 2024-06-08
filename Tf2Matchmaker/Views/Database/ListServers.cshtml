@@ -1,0 +1,45 @@
+@using Tf2Matchmaker.Common.Servers
+@model Tf2Matchmaker.Models.ServerListModel
+
+@{
+	Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+	<title>Servers</title>
+</head>
+<body>
+<div>
+	<table>
+		<thead>
+		<tr>
+			<td>Address</td>
+			<td>VAC Secured</td>
+			<td>Name</td>
+			<td>Game</td>
+			<td>Map</td>
+			<td>Players</td>
+			<td>Last Fetched</td>
+		</tr>
+		</thead>
+		<tbody>
+		@foreach (TFServer server in Model.Servers)
+		{
+			<tr>
+				<td><a href="steam://connect/@server.ServerHost"></a>@server.ServerHost</td>
+				<td>@server.Vac</td>
+				<td>@server.Name</td>
+				<td>@server.Game</td>
+				<td>@server.Map</td>
+				<td>@server.Players/@server.MaxPlayers@(server.Bots > 0 ? $" ({server.Bots} bots)" : "")</td>
+				<td>@server.LastFetched</td>
+			</tr>
+		}
+		</tbody>
+	</table>  
+</div>
+</body>
+</html>
