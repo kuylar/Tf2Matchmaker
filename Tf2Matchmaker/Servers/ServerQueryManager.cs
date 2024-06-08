@@ -39,6 +39,7 @@ public static class ServerQueryManager
 				byte[] challenge = reader.ReadBytes(4);
 				await QuerySingleServer(server, challenge);
 				await QueryPlayers(server, challenge);
+				await QueryRules(server, challenge);
 				break;
 			case 'I': // A2S_INFO
 				TFServer tfServer = new(server, reader);
@@ -57,6 +58,12 @@ public static class ServerQueryManager
 					Log.Information("#[{0}] {1,-16} {2,-3} {3}", i, string.Join("", player.Name.Take(15)), player.Score,
 						player.OnlineDuration);
 				}
+				break;
+			case 'E': // A2S_RULES
+				TFServerRules rules = new(server, reader);
+				Log.Information("[{0}] Got {1} rules", server, rules.Rules.Count);
+				foreach ((string? key, string? value) in rules.Rules) 
+					Log.Information("{0}: {1}", key, value);
 				break;
 			default:
 				Log.Warning("Unknown header: 0x{0:X2}/{1}", (byte)header, header);
@@ -78,6 +85,19 @@ public static class ServerQueryManager
 		await serverQueryClient.SendAsync(request, serverEndpoint);
 	}
 
+	public static async Task QuerySingleServer(IPEndPoint serverEndpoint, byte[] challenge)
+	{
+		byte[] request =
+		[
+			// -1, Packet isnt split
+			0xFF, 0xFF, 0xFF, 0xFF,
+			// Source Engine Query
+			0x54, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x45, 0x6E,
+			0x67, 0x69, 0x6E, 0x65, 0x20, 0x51, 0x75, 0x65, 0x72, 0x79, 0x00
+		];
+		await serverQueryClient.SendAsync(AppendChallenge(request, challenge), serverEndpoint);
+	}
+
 	public static async Task QueryPlayers(IPEndPoint serverEndpoint, byte[] challenge)
 	{
 		byte[] request =
@@ -90,15 +110,14 @@ public static class ServerQueryManager
 		await serverQueryClient.SendAsync(AppendChallenge(request, challenge), serverEndpoint);
 	}
 
-	public static async Task QuerySingleServer(IPEndPoint serverEndpoint, byte[] challenge)
+	public static async Task QueryRules(IPEndPoint serverEndpoint, byte[] challenge)
 	{
 		byte[] request =
 		[
 			// -1, Packet isnt split
 			0xFF, 0xFF, 0xFF, 0xFF,
-			// Source Engine Query
-			0x54, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x45, 0x6E,
-			0x67, 0x69, 0x6E, 0x65, 0x20, 0x51, 0x75, 0x65, 0x72, 0x79, 0x00
+			// 'V'
+			0x56
 		];
 		await serverQueryClient.SendAsync(AppendChallenge(request, challenge), serverEndpoint);
 	}
